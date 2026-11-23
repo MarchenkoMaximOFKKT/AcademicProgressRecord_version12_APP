@@ -1,7 +1,5 @@
 package com.example.AcademicProgressRecord_version12.data.remote
 
-import com.example.AcademicProgressRecord_version12.Subject
-import com.example.AcademicProgressRecord_version12.SubjectStatus
 import com.google.gson.annotations.SerializedName
 
 data class SubjectDto(

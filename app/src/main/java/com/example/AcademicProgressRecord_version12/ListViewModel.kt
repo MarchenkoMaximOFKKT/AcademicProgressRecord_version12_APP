@@ -3,11 +3,13 @@ package com.example.AcademicProgressRecord_version12
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.AcademicProgressRecord_version12.domain.SubjectRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class ListUiState(
     val subjects: List<Subject> = emptyList(),
@@ -18,7 +20,8 @@ data class ListUiState(
     val visibleSubjects: List<Subject>
         get() = subjects.filter { it.name.contains(query, ignoreCase = true) }
 }
-class ListViewModel(
+@HiltViewModel
+class ListViewModel @Inject constructor(
     private val repository: SubjectRepository
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ListUiState())
