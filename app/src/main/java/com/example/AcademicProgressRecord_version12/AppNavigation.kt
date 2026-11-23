@@ -20,17 +20,8 @@ fun AppNavigation() {
         composable(
             route = "details/{itemId}",
             arguments = listOf(navArgument("itemId") { type = NavType.IntType })
-        ) { backStackEntry ->
-            val id = backStackEntry.arguments?.getInt("itemId")
-            val subject = sampleSubjects.find { it.id == id }
-            if (subject != null) {
-                DetailScreen(
-                    subject = subject,
-                    onBack = { navController.popBackStack() }
-                )
-            } else {
-                Text("Предмет не знайдено")
-            }
+        ) {
+            DetailScreen(onBack = { navController.popBackStack() })
         }
     }
 }

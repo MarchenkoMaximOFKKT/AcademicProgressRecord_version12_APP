@@ -13,12 +13,3 @@ data class SubjectDto(
     @SerializedName("current_score") val currentScore: Double,
     @SerializedName("attendance_percent") val attendancePercent: Int
 )
-fun SubjectDto.toDomain(): Subject = Subject(
-    id = id,
-    name = name,
-    targetScore = targetScore,
-    minAttendancePercent = minAttendancePercent,
-    status = SubjectStatus.values().find { it.name == status } ?: SubjectStatus.SAFE,
-    currentScore = currentScore,
-    attendancePercent = attendancePercent
-)
