@@ -2,54 +2,38 @@ package com.example.AcademicProgressRecord_version12
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.AcademicProgressRecord_version12.domain.SubjectRepository
-import dagger.hilt.android.lifecycle.HiltViewModel
+import com.example.AcademicProgressRecord_version12.data.SubjectRepositoryImpl
+import com.example.AcademicProgressRecord_version12.domain.GetSubjectsUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 data class ListUiState(
     val subjects: List<Subject> = emptyList(),
     val query: String = "",
-    val isRefreshing: Boolean = false,
-    val syncError: String? = null
+    val isLoading: Boolean = false
 ) {
     val visibleSubjects: List<Subject>
         get() = subjects.filter { it.name.contains(query, ignoreCase = true) }
 }
-@HiltViewModel
-class ListViewModel @Inject constructor(
-    private val repository: SubjectRepository
+class ListViewModel(
+    private val getSubjects: GetSubjectsUseCase = GetSubjectsUseCase(SubjectRepositoryImpl())
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(ListUiState())
+    private val _uiState = MutableStateFlow(ListUiState(isLoading = true))
     val uiState: StateFlow<ListUiState> = _uiState.asStateFlow()
     init {
-        observeCache()
-        refresh()
+        loadSubjects()
     }
-    private fun observeCache() {
+    private fun loadSubjects() {
         viewModelScope.launch {
-            repository.observeSubjects().collect { list ->
-                _uiState.update { it.copy(subjects = list) }
-            }
+            _uiState.update { it.copy(isLoading = true) }
+            val subjects = getSubjects()
+            _uiState.update { it.copy(subjects = subjects, isLoading = false) }
         }
-    }
-    fun refresh() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isRefreshing = true) }
-            when (val result = repository.refresh()) {
-                is Result.Success -> _uiState.update { it.copy(isRefreshing = false, syncError = null) }
-                is Result.Error -> _uiState.update { it.copy(isRefreshing = false, syncError = result.message) }
-            }
-        }
-    }
-    fun onSyncErrorShown() {
-        _uiState.update { it.copy(syncError = null) }
     }
     fun onQueryChange(newQuery: String) {
-        _uiState.update { it.copy(query = newQuery) }
+        _uiState.update { current -> current.copy(query = newQuery) }
     }
 }

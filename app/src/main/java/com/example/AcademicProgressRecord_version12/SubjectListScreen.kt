@@ -13,24 +13,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 fun statusLabel(status: SubjectStatus): String = when (status) {
@@ -41,15 +34,13 @@ fun statusLabel(status: SubjectStatus): String = when (status) {
 @Composable
 fun SubjectListScreen(
     onSubjectClick: (Int) -> Unit,
-    viewModel: ListViewModel = hiltViewModel()
+    viewModel: ListViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     SubjectListContent(
         uiState = uiState,
         onQueryChange = viewModel::onQueryChange,
-        onSubjectClick = onSubjectClick,
-        onRefresh = viewModel::refresh,
-        onSyncErrorShown = viewModel::onSyncErrorShown
+        onSubjectClick = onSubjectClick
     )
 }
 @OptIn(ExperimentalMaterial3Api::class)
@@ -57,25 +48,10 @@ fun SubjectListScreen(
 fun SubjectListContent(
     uiState: ListUiState,
     onQueryChange: (String) -> Unit,
-    onSubjectClick: (Int) -> Unit,
-    onRefresh: () -> Unit = {},
-    onSyncErrorShown: () -> Unit = {}
+    onSubjectClick: (Int) -> Unit
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-    LaunchedEffect(uiState.syncError) {
-        if (uiState.syncError != null) {
-            snackbarHostState.showSnackbar("Немає з'єднання. Показано збережені дані")
-            onSyncErrorShown()
-        }
-    }
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Журнал успішності") },
-                actions = { TextButton(onClick = onRefresh) { Text("Оновити") } }
-            )
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        topBar = { TopAppBar(title = { Text("Журнал успішності") }) }
     ) { padding ->
         Column(modifier = Modifier.padding(padding).padding(horizontal = 16.dp)) {
             OutlinedTextField(
@@ -86,16 +62,16 @@ fun SubjectListContent(
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(8.dp))
-            if (uiState.isRefreshing) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-            if (uiState.subjects.isEmpty() && !uiState.isRefreshing) {
-                Text("Даних поки немає")
-            }
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                items(uiState.visibleSubjects, key = { it.id }) { subject ->
-                    SubjectCard(subject = subject, onClick = { onSubjectClick(subject.id) })
+            if (uiState.isLoading) {
+                CircularProgressIndicator()
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    items(uiState.visibleSubjects, key = { it.id }) { subject ->
+                        SubjectCard(
+                            subject = subject,
+                            onClick = { onSubjectClick(subject.id) }
+                        )
+                    }
                 }
             }
         }

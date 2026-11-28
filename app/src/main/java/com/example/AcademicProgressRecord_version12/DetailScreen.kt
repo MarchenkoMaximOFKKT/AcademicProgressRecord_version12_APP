@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -16,32 +15,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-
-@Composable
-fun DetailScreen(
-    onBack: () -> Unit,
-    viewModel: DetailViewModel = hiltViewModel()
-) {
-    val state by viewModel.uiState.collectAsStateWithLifecycle()
-    val subject = state.subject
-    when {
-        subject != null -> DetailContent(subject, state.components, onBack)
-        state.isLoaded -> Text("Предмет не знайдено")
-        else -> CircularProgressIndicator()
-    }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailContent(subject: Subject, subjectComponents: List<GradeComponent>, onBack: () -> Unit) {
+fun DetailScreen(subject: Subject, onBack: () -> Unit) {
+    val subjectComponents = sampleComponents.filter { it.subjectId == subject.id }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -59,7 +41,9 @@ fun DetailContent(subject: Subject, subjectComponents: List<GradeComponent>, onB
             if (subjectComponents.isEmpty()) {
                 item { Text("Компоненти ще не додані") }
             } else {
-                items(subjectComponents, key = { it.id }) { ComponentCard(it) }
+                items(subjectComponents, key = { it.id }) { component ->
+                    ComponentCard(component)
+                }
             }
         }
     }
@@ -102,7 +86,5 @@ fun ComponentCard(component: GradeComponent) {
 @Preview(showBackground = true)
 @Composable
 fun DetailScreenPreview() {
-    DetailContent(subject = sampleSubjects[0],
-        subjectComponents = sampleComponents.filter {
-            it.subjectId == 1 }, onBack = {})
+    DetailScreen(subject = sampleSubjects[0], onBack = {})
 }
